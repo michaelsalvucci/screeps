@@ -1,21 +1,19 @@
 # README
 
 ## ABOUT
-
 Client-side scripts to play the screeps.com game
 
-## DESCRIPTION
-
+## WHY
 These are some **experiments** with using bots in the Screeps.com game.
 
-Try it out and tell me *if you like it*.
+After searching for 2 nights and finding terrible examples on how to write bots for screeps.com, I've decided to start this project to see if anyone wants to collaborate on it.
+
+>I plan on doing major refactoring over time.  First of all, I don't even really know how to play Screeps as I started 2 nights ago, so I plan to spend some time to see what's involved and grow (april 2021).
+
+Try it out and *tell me* if you like it, or if it helped you improve your game, coding, or logic.
 
 ## GOAL
 >To learn how the client-side Screeps game works and improve upon programming skills, whether that be javascript, node.js, python, or even markdown language.
-
-
-
-
 
 ## Official Screeps.com Links
 - [https://screeps.com](https://screeps.com) - The main website
@@ -25,3 +23,7 @@ Try it out and tell me *if you like it*.
 - [https://chat.screeps.com/](https://chat.screeps.com/) - Slack
 - [https://twitter.com/ScreepsGame](https://twitter.com/ScreepsGame) - Twitter
 - [https://www.facebook.com/ScreepsGame](https://www.facebook.com/ScreepsGame) - Facebook
+
+
+## Other Links
+- [https://www.markdownguide.org/basic-syntax/](https://www.markdownguide.org/basic-syntax/) - Markdown Guide on how to write a README.md
