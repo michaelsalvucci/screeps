@@ -1,14 +1,23 @@
 
 
 //emoji available at:  http://unicode.org/emoji/charts/emoji-style.txt
+
+//best practices:  https://www.developerdrive.com/top-10-must-follow-javascript-best-practices-2/
+// v--- never use var multiple times.
+
+
+
+//const PLAYER_USERNAME = _.find({...Game.structures, ...Game.creeps, ...Game.constructionSites}).owner.username;
+
+
 var pathColorHarvester = '#ffaa00';
 var pathColorBuilder = '#ffffff';
 
 
 
 //var currentHarvestersPerRoom = 0
-var maxHarvestersPerRoom = 5
-var maxBuildersPerRoom = 0
+var maxHarvestersPerRoom = 2
+var maxBuildersPerRoom = 1
 var maxMinersPerRoom = 0
 
 var taskHarvest = 1 // 1=harvest; 0=store it at the controller (@TODO ... or somewhere else)
@@ -76,7 +85,7 @@ module.exports.loop = function () {
             bodySetup = [WORK,WORK,WORK,CARRY,MOVE]
         }
         else if (currentEnergy >= 300) {
-            bodySetup = [WORK,WORK,CARRY,MOVE]
+            bodySetup = [WORK,MOVE,CARRY,MOVE,MOVE]
         } else {
             bodySetup = [WORK,MOVE,CARRY,MOVE]
         }
@@ -149,12 +158,33 @@ console.log('newName' + newName);
 
     if (creep.memory.role == "builder") {
 //console.log('hereiam');
-      if (creep.memory.taskBuild == 0 && creep.carry.energy <= creep.carryCapacity) {
-        // Harvest insted of build
-        Game.creeps[i].moveTo(source, {visualizePathStyle: {stroke: pathColorBuilder}});
-        Game.creeps[i].harvest(source);
-        creep.say('b⛏️' + creep.carry.energy + '/' + creep.carryCapacity);
+      if (creep.memory.taskBuild == 0 && creep.carry.energy < creep.carryCapacity) {
+        // Harvest instead of build
+        creep.moveTo(source, {visualizePathStyle: {stroke: pathColorBuilder}});
+        creep.harvest(source);
+        creep.say('A🚧' + creep.carry.energy + '/' + creep.carryCapacity);
+      } else {
+        if (creep.carry.energy == 0) {
+          // Go harvest
+          creep.moveTo(source, {visualizePathStyle: {stroke: pathColorBuilder}});
+          creep.say('B🚧' + creep.carry.energy + '/' + creep.carryCapacity);
+          creep.harvest(source);
+          creep.memory.taskBuild = 0;
+        } else if (creep.memory.taskBuild == 1 && creep.carry.energy <= creep.carryCapacity) {
+          // go build something
+//var structure = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
+var structure = creep.pos.findClosestByRange(FIND_STRUCTURES);
+//console.log(JSON_stringify(creep.pos.findClosestByRange(FIND_STRUCTURES)));
+          creep.moveTo(structure, {visualizePathStyle: {stroke: pathColorBuilder}});
+          creep.transfer(structure, RESOURCE_ENERGY);
+//          creep.build(structure); // wtf?
+          creep.say('C🚧' + creep.carry.energy + '/' + creep.carryCapacity);
+        } else {
+          creep.say('D🚧' + creep.carry.energy + '/' + creep.carryCapacity);
+          creep.memory.taskBuild = 1;
+        }
       }
+
     }
 
     if (creep.memory.role == "harvester") {

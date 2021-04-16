@@ -1,7 +1,7 @@
 # README
 
 ## ABOUT
-Client-side scripts to play the screeps.com game
+Client-side scripts to play the screeps.com game.
 
 ## WHY
 These are some **experiments** with using bots in the Screeps.com game.
@@ -19,11 +19,14 @@ Try it out and *tell me* if you like it, or if it helped you improve your game, 
 - [https://screeps.com](https://screeps.com) - The main website
 - [https://docs.screeps.com](https://docs.screeps.com) - Documentation
 - [https://docs.screeps.com/api](https://docs.screeps.com/api) - API
+-[https://status.screeps.com/](https://status.screeps.com/) - Server Status
 - [https://store.steampowered.com/app/464350/Screeps/](https://store.steampowered.com/app/464350/Screeps/) - Steam
 - [https://chat.screeps.com/](https://chat.screeps.com/) - Slack
 - [https://twitter.com/ScreepsGame](https://twitter.com/ScreepsGame) - Twitter
 - [https://www.facebook.com/ScreepsGame](https://www.facebook.com/ScreepsGame) - Facebook
 
+## Community Links
+- [https://wiki.screepspl.us/index.php/Screeps_Wiki](https://wiki.screepspl.us/index.php/Screeps_Wiki) - Wiki
 
 ## Other Links
 - [https://www.markdownguide.org/basic-syntax/](https://www.markdownguide.org/basic-syntax/) - Markdown Guide on how to write a README.md
