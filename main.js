@@ -1,4 +1,4 @@
-
+var utilRoom = require('util.room');
 
 //emoji available at:  http://unicode.org/emoji/charts/emoji-style.txt
 
@@ -10,14 +10,17 @@
 //const PLAYER_USERNAME = _.find({...Game.structures, ...Game.creeps, ...Game.constructionSites}).owner.username;
 
 
+// @TODO:  Wrap/Cover important structures with ramparts per slack #help
+// Building walls is important
+
 var pathColorHarvester = '#ffaa00';
 var pathColorBuilder = '#ffffff';
 
 
 
 //var currentHarvestersPerRoom = 0
-var maxHarvestersPerRoom = 2
-var maxBuildersPerRoom = 1
+var maxHarvestersPerRoom = 1
+var maxBuildersPerRoom = 3
 var maxMinersPerRoom = 0
 
 var taskHarvest = 1 // 1=harvest; 0=store it at the controller (@TODO ... or somewhere else)
@@ -40,8 +43,23 @@ module.exports.loop = function () {
   // ROOM-BASED ACTIONS FOR SPAWNING
   // If our creep doesnt exist, create it from our spawns
   for(var roomName in Game.rooms) {
+
     //console.log('roomName=' + roomName);
     var currentEnergy = Game.rooms[roomName].energyAvailable;
+
+
+    // tower defense - https://docs.screeps.com/defense.html
+    var hostiles = Game.rooms[roomName].find(FIND_HOSTILE_CREEPS);
+    if(hostiles.length > 0) {
+        var hostileUsername = hostiles[0].owner.username;
+        console.log(`User ${hostileUsername} spotted in room ${roomName}`);
+        var towers = Game.rooms[roomName].find(
+            FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
+        towers.forEach(tower => tower.attack(hostiles[0]));
+    }
+
+
+
     //console.log(Game.rooms[roomName] + ' currentEnergy=' + currentEnergy);
     if (currentEnergy < 300) {  // save us precious cpu time
       // Since we cannot spawn, we should abort this for loop
@@ -63,12 +81,30 @@ module.exports.loop = function () {
       var nextToSpawn = 'builder';
     }
 
+    // body setup
+    // Put TOUGH first.  Put HEAL last.  https://wiki.screepspl.us/index.php/Creep_body_setup_strategies
+    /*
+    Bodypart	Buildcost	Effect
+    MOVE	50	Moves the creep. Reduces creep fatigue by 2/tick. See movement.
+    WORK	100	Harvests energy from target source. Gathers 2 energy/tick.
+    Constructs a target structure. Builds the designated structure at a construction site, at 5 points/tick, consuming 1 energy/point. See building Costs.
+    Repairs a target structure. Repairs a structure for 100 hits/tick. Consumes 0.01 energy/hit repaired, rounded up to the nearest whole number.
+    CARRY	50	Stores energy. Contains up to 50 energy units. Weighs nothing when empty.
+    ATTACK	80	Attacks a target creep/structure. Deals 30 damage/tick. Short-ranged attack (1 tile).
+    RANGED_ATTACK	150	Attacks a target creep/structure. Deals 10 damage/tick. Long-ranged attack (1 to 3 tiles).
+    HEAL	250	Heals a target creep. Restores 12 hit points/tick at short range (1 tile) or 4 hits/tick at a distance (up to 3 tiles).
+    TOUGH	10	No effect other than the 100 hit points all body parts add. This provides a cheap way to add hit points to a creep.
+    CLAIM	600
+    */
     var bodySetup = []
     switch (nextToSpawn) {
       case "attacker":
         // @TODO
         break;
       case "defender":
+        // @TODO
+        break;
+      case "healer":
         // @TODO
         break;
       case "miner":
@@ -82,33 +118,34 @@ module.exports.loop = function () {
         break;
       case "builder":
         if (currentEnergy >= 400) {
-            bodySetup = [WORK,WORK,WORK,CARRY,MOVE]
+            bodySetup = [WORK,WORK,WORK,CARRY,MOVE] // w100+w100+w100+c50+m50 = 400
         }
         else if (currentEnergy >= 300) {
-            bodySetup = [WORK,MOVE,CARRY,MOVE,MOVE]
+            bodySetup = [WORK,MOVE,CARRY,MOVE,MOVE] // w100+m50+c50+m50+m50 = 300
         } else {
-            bodySetup = [WORK,MOVE,CARRY,MOVE]
+            console.log('ERR: Attempting to create a bodySetup with only 250 energy')
+            bodySetup = [WORK,MOVE,CARRY,MOVE] // w100+m50+c50+m50 = 250
         }
         taskBuild = 1  // i am incorrectly setting this to 1 even though it initializes as 0
         break;
       case "harvester":
       default:
         if (currentEnergy >= 400) {
-          bodySetup = [WORK,MOVE,CARRY,WORK,MOVE,CARRY]
+          bodySetup = [WORK,MOVE,CARRY,WORK,MOVE,CARRY] // w100+w100+w100+c50+m50 = 400
         }
           else if (currentEnergy >= 300) {
-            bodySetup = [WORK,MOVE,CARRY,MOVE,MOVE]
+            bodySetup = [WORK,MOVE,CARRY,MOVE,MOVE] // w100+m50+c50+m50+m50 = 300
         } else {
-            bodySetup = [WORK,MOVE,CARRY,MOVE]
+            bodySetup = [WORK,MOVE,CARRY,MOVE] // w100+m50+c50+m50 = 250
         }
         taskHarvest = 1
         break;
     }
 
 
-    if (harvesters.length < maxHarvestersPerRoom) {
+    if (harvesters.length < maxHarvestersPerRoom || builders.length < maxBuildersPerRoom) {
       var newName = nextToSpawn + Game.time;
-console.log('newName' + newName);
+      //console.log('newName' + newName);
       var result = Game.spawns['Spawn1'].spawnCreep(
         bodySetup
         , newName
@@ -122,7 +159,7 @@ console.log('newName' + newName);
       //console.log('result=' + result);
       switch (result) {
         case OK:
-          console.log('• Spawning new harvester: ' + newName);
+          console.log('• Spawning: ' + newName);
 //          console.log('spawning new creep');
           break;
         case ERR_NOT_OWNER:  // -1
@@ -160,7 +197,8 @@ console.log('newName' + newName);
 //console.log('hereiam');
       if (creep.memory.taskBuild == 0 && creep.carry.energy < creep.carryCapacity) {
         // Harvest instead of build
-        creep.moveTo(source, {visualizePathStyle: {stroke: pathColorBuilder}});
+        var result = creep.moveTo(source, {visualizePathStyle: {stroke: pathColorBuilder}});
+console.log('result='+result);
         creep.harvest(source);
         creep.say('A🚧' + creep.carry.energy + '/' + creep.carryCapacity);
       } else {
@@ -171,14 +209,27 @@ console.log('newName' + newName);
           creep.harvest(source);
           creep.memory.taskBuild = 0;
         } else if (creep.memory.taskBuild == 1 && creep.carry.energy <= creep.carryCapacity) {
-          // go build something
-//var structure = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
-var structure = creep.pos.findClosestByRange(FIND_STRUCTURES);
-//console.log(JSON_stringify(creep.pos.findClosestByRange(FIND_STRUCTURES)));
-          creep.moveTo(structure, {visualizePathStyle: {stroke: pathColorBuilder}});
-          creep.transfer(structure, RESOURCE_ENERGY);
-//          creep.build(structure); // wtf?
-          creep.say('C🚧' + creep.carry.energy + '/' + creep.carryCapacity);
+          // Go build something
+          var controllerLevel = Game.spawns['Spawn1'].room.controller.level;
+          if (controllerLevel >= 3) {
+              //console.log('• [' + roomName + '] Building tower.')
+              //console.log(JSON.stringify(creep));
+              var validTiles = utilRoom.getValidTilesCloseTo(roomName, Game.spawns['Spawn1'].pos, 6)
+              Game.rooms[roomName].createConstructionSite(validTiles[0][0], validTiles[0][1], 'tower', 'tower1')
+              var structure = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
+              if (structure === null) {
+                // Since I don't have a tower to build, I need to build an extension
+                Game.rooms[roomName].createConstructionSite(validTiles[0][0], validTiles[0][1], STRUCTURE_EXTENSION , 'extension'+Game.time)
+              } else {
+                console.log(structure);
+              }
+              //var structure = creep.pos.findClosestByRange(FIND_STRUCTURES);
+              //console.log(JSON_stringify(creep.pos.findClosestByRange(FIND_STRUCTURES)));
+              creep.moveTo(structure, {visualizePathStyle: {stroke: pathColorBuilder}});
+              //  creep.transfer(structure, RESOURCE_ENERGY);  // transfer energy to Spawn1
+              creep.build(structure); // wtf?
+              creep.say('C🚧' + creep.carry.energy + '/' + creep.carryCapacity);
+          }
         } else {
           creep.say('D🚧' + creep.carry.energy + '/' + creep.carryCapacity);
           creep.memory.taskBuild = 1;
@@ -237,9 +288,13 @@ var structure = creep.pos.findClosestByRange(FIND_STRUCTURES);
         }
       }
     }
-    // HEALTH CHECK
+    // HEALTH CHECK and ROAD BUILDING
     if(creep.fatigue > 0) {
       creep.say('😌 fatigue');
+      //console.log(JSON.stringify(creep.pos));
+      // Since I'm tired, build a road to improve the future
+      road = Game.rooms[roomName].createConstructionSite(creep.pos.x, creep.pos.y, STRUCTURE_ROAD , 'road'+Game.time);
+      creep.build(road);
     }
   }
 }

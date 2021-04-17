@@ -19,7 +19,7 @@ Try it out and *tell me* if you like it, or if it helped you improve your game, 
 - [https://screeps.com](https://screeps.com) - The main website
 - [https://docs.screeps.com](https://docs.screeps.com) - Documentation
 - [https://docs.screeps.com/api](https://docs.screeps.com/api) - API
--[https://status.screeps.com/](https://status.screeps.com/) - Server Status
+- [https://status.screeps.com/](https://status.screeps.com/) - Server Status
 - [https://store.steampowered.com/app/464350/Screeps/](https://store.steampowered.com/app/464350/Screeps/) - Steam
 - [https://chat.screeps.com/](https://chat.screeps.com/) - Slack
 - [https://twitter.com/ScreepsGame](https://twitter.com/ScreepsGame) - Twitter
