@@ -1,7 +1,15 @@
 var fatigueCheck = {
 
+    /*
+      If a creep is tired, consider building a road
+    */
+
+    // Silten on screeps.slack.com recommends using PathFinder to more directly plan road routes, so you end up with less
+
     /** @param {Creep} creep **/
     run: function(creep, roomName) {
+
+
 
       if(creep.fatigue > 0) {
         creep.say('😌 fatigue');

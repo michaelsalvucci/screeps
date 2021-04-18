@@ -76,6 +76,12 @@ module.exports.loop = function () {
     var builders = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
 
     // DETERMINE which role to spawn
+
+    // @TODO: If we're under attack, launch role_defendmelee
+    //if (hostiles.length>0) {
+    //  var nextToSpawn = "defendmelee";
+    //}
+
     var percentHarvesters = harvesters.length / maxHarvestersPerRoom;
 //    console.log('percentHarvesters=' + percentHarvesters);
     var percentBuilders = builders.length / maxBuildersPerRoom;
@@ -101,14 +107,21 @@ module.exports.loop = function () {
     TOUGH	         10	No effect other than the 100 hit points all body parts add. This provides a cheap way to add hit points to a creep.
     CLAIM	        600
     */
-
     var bodySetup = []
     switch (nextToSpawn) {
       case "attacker":
         // @TODO
         break;
-      case "defender":
-        // @TODO
+      case "defendmelee":
+        if (currentEnergy >= 350) {
+            bodySetup = [TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,MOVE,MOVE,MOVE,ATTACK] // Tx12=120 + Mx3=150 + Ax1=80 = 350.  3 moves to go from ranged to melee
+        }
+        else if (currentEnergy >= 300) {
+            bodySetup = [TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,MOVE,MOVE,ATTACK] // Tx12=120 + Mx2=100 + Ax1=80 = 300
+        } else {
+            console.log('ERR: Attempting to create a bodySetup with only 250 energy')
+            bodySetup = [WORK,MOVE,CARRY,MOVE] // w100+m50+c50+m50 = 250
+        }
         break;
       case "healer":
         // @TODO
@@ -123,6 +136,7 @@ module.exports.loop = function () {
         // @TODO
         break;
       case "builder":
+        // Put in 1 WORK for each CARRY
         if (currentEnergy >= 800) {
           bodySetup = [WORK,WORK,WORK,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY] // w100+w100+w100+m50+m50+m50+m50+m50+m50+c50+c50+c50+c50 = 800
         }
