@@ -15,6 +15,9 @@ Try it out and *tell me* if you like it, or if it helped you improve your game, 
 ## GOAL
 >To learn how the client-side Screeps game works and improve upon programming skills, whether that be javascript, node.js, python, or even markdown language.
 
+>I have been told it's impossible to use a data center to play this game, because of the CPU/Mem constraints.  My initial impression is they are wrong, so I want to see if I can do it, or if it's simply a forced-limitation on the game.
+
+
 ## Official Screeps.com Links
 - [https://screeps.com](https://screeps.com) - The main website
 - [https://docs.screeps.com](https://docs.screeps.com) - Documentation

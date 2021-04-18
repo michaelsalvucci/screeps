@@ -19,6 +19,7 @@ var pathColorBuilder = '#ffffff';
 
 
 //var currentHarvestersPerRoom = 0
+//@TODO:  This looks like a problem because it doesn't take into part that we could be in different shards
 var maxHarvestersPerRoom = 1
 var maxBuildersPerRoom = 3
 var maxMinersPerRoom = 0
@@ -84,17 +85,17 @@ module.exports.loop = function () {
     // body setup
     // Put TOUGH first.  Put HEAL last.  https://wiki.screepspl.us/index.php/Creep_body_setup_strategies
     /*
-    Bodypart	Buildcost	Effect
-    MOVE	50	Moves the creep. Reduces creep fatigue by 2/tick. See movement.
-    WORK	100	Harvests energy from target source. Gathers 2 energy/tick.
-    Constructs a target structure. Builds the designated structure at a construction site, at 5 points/tick, consuming 1 energy/point. See building Costs.
-    Repairs a target structure. Repairs a structure for 100 hits/tick. Consumes 0.01 energy/hit repaired, rounded up to the nearest whole number.
-    CARRY	50	Stores energy. Contains up to 50 energy units. Weighs nothing when empty.
-    ATTACK	80	Attacks a target creep/structure. Deals 30 damage/tick. Short-ranged attack (1 tile).
-    RANGED_ATTACK	150	Attacks a target creep/structure. Deals 10 damage/tick. Long-ranged attack (1 to 3 tiles).
-    HEAL	250	Heals a target creep. Restores 12 hit points/tick at short range (1 tile) or 4 hits/tick at a distance (up to 3 tiles).
-    TOUGH	10	No effect other than the 100 hit points all body parts add. This provides a cheap way to add hit points to a creep.
-    CLAIM	600
+    Bodypart Buildcost	Effect
+    MOVE    50	      Moves the creep. Reduces creep fatigue by 2/tick. See movement.
+    WORK    100	      Harvests energy from target source. Gathers 2 energy/tick.
+                      Constructs a target structure. Builds the designated structure at a construction site, at 5 points/tick, consuming 1 energy/point. See building Costs.
+                      Repairs a target structure. Repairs a structure for 100 hits/tick. Consumes 0.01 energy/hit repaired, rounded up to the nearest whole number.
+    CARRY          50	Stores energy. Contains up to 50 energy units. Weighs nothing when empty.
+    ATTACK	       80	Attacks a target creep/structure. Deals 30 damage/tick. Short-ranged attack (1 tile).
+    RANGED_ATTACK 150	Attacks a target creep/structure. Deals 10 damage/tick. Long-ranged attack (1 to 3 tiles).
+    HEAL	        250	Heals a target creep. Restores 12 hit points/tick at short range (1 tile) or 4 hits/tick at a distance (up to 3 tiles).
+    TOUGH	         10	No effect other than the 100 hit points all body parts add. This provides a cheap way to add hit points to a creep.
+    CLAIM	        600
     */
     var bodySetup = []
     switch (nextToSpawn) {
@@ -117,8 +118,11 @@ module.exports.loop = function () {
         // @TODO
         break;
       case "builder":
+        if (currentEnergy >= 500) {
+            bodySetup = [WORK,WORK,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY] // w100+w100+m50+m50+m50+m50+c50+c50 = 500
+        }
         if (currentEnergy >= 400) {
-            bodySetup = [WORK,WORK,WORK,CARRY,MOVE] // w100+w100+w100+c50+m50 = 400
+            bodySetup = [WORK,WORK,MOVE,MOVE,CARRY,MOVE] // w100+m50+w100+m50+c50+m50 = 400
         }
         else if (currentEnergy >= 300) {
             bodySetup = [WORK,MOVE,CARRY,MOVE,MOVE] // w100+m50+c50+m50+m50 = 300
@@ -198,7 +202,7 @@ module.exports.loop = function () {
       if (creep.memory.taskBuild == 0 && creep.carry.energy < creep.carryCapacity) {
         // Harvest instead of build
         var result = creep.moveTo(source, {visualizePathStyle: {stroke: pathColorBuilder}});
-console.log('result='+result);
+        //console.log('result='+result);
         creep.harvest(source);
         creep.say('A🚧' + creep.carry.energy + '/' + creep.carryCapacity);
       } else {
@@ -209,6 +213,7 @@ console.log('result='+result);
           creep.harvest(source);
           creep.memory.taskBuild = 0;
         } else if (creep.memory.taskBuild == 1 && creep.carry.energy <= creep.carryCapacity) {
+          creep.say('C🚧' + creep.carry.energy + '/' + creep.carryCapacity);
           // Go build something
           var controllerLevel = Game.spawns['Spawn1'].room.controller.level;
           if (controllerLevel >= 3) {
@@ -221,14 +226,58 @@ console.log('result='+result);
                 // Since I don't have a tower to build, I need to build an extension
                 Game.rooms[roomName].createConstructionSite(validTiles[0][0], validTiles[0][1], STRUCTURE_EXTENSION , 'extension'+Game.time)
               } else {
-                console.log(structure);
+                var result = creep.moveTo(structure, {visualizePathStyle: {stroke: pathColorBuilder}});
+                //console.log('creep.moveTo='+result);
+                var result = creep.build(structure);
+                //console.log('creep.build='+result);
               }
+
+              // Transfer energy into structures
+              var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                filter: (structure) => {
+                  return (structure.structureType == STRUCTURE_EXTENSION ||
+                    structure.structureType == STRUCTURE_CONTAINER ||
+                    structure.structureType == STRUCTURE_SPAWN ||
+                    structure.structureType == STRUCTURE_TOWER) && structure.energy < structure.energyCapacity;
+                  }
+              });
+              if (target) {
+                creep.say('E🚧' + creep.carry.energy + '/' + creep.carryCapacity);
+                var result = creep.moveTo(target, {visualizePathStyle: {stroke: pathColorBuilder}});
+                var result = creep.transfer(target, RESOURCE_ENERGY);
+              }
+
+              // Repair structures
+              var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                filter: (structure) => {
+                  return (structure.structureType == STRUCTURE_EXTENSION ||
+                    structure.structureType == STRUCTURE_CONTAINER ||
+                    structure.structureType == STRUCTURE_ROAD ||
+                    structure.structureType == STRUCTURE_SPAWN ||
+                    structure.structureType == STRUCTURE_TOWER) && structure.hits < structure.hitsMax;
+                  }
+              });
+              if (target) {
+                creep.say('F🚧' + creep.carry.energy + '/' + creep.carryCapacity);
+                var result = creep.moveTo(target, {visualizePathStyle: {stroke: pathColorBuilder}});
+                var result = creep.repair(target);
+              }
+
+
+
               //var structure = creep.pos.findClosestByRange(FIND_STRUCTURES);
               //console.log(JSON_stringify(creep.pos.findClosestByRange(FIND_STRUCTURES)));
-              creep.moveTo(structure, {visualizePathStyle: {stroke: pathColorBuilder}});
-              //  creep.transfer(structure, RESOURCE_ENERGY);  // transfer energy to Spawn1
-              creep.build(structure); // wtf?
-              creep.say('C🚧' + creep.carry.energy + '/' + creep.carryCapacity);
+              //var result = creep.moveTo(structure, {visualizePathStyle: {stroke: pathColorBuilder}});
+              //console.log('creep.moveTo='+result);
+              //var result = creep.transfer(structure, RESOURCE_ENERGY);
+              //console.log('creep.transfer='+result);
+              //var result = creep.build(structure); // wtf?
+              //console.log('creep.build='+result);
+
+//              var result = creep.pos.findClosetByRange(FIND_MY_STRUCTURES);
+//              console.log(result);
+
+
           }
         } else {
           creep.say('D🚧' + creep.carry.energy + '/' + creep.carryCapacity);
@@ -291,7 +340,6 @@ console.log('result='+result);
     // HEALTH CHECK and ROAD BUILDING
     if(creep.fatigue > 0) {
       creep.say('😌 fatigue');
-      //console.log(JSON.stringify(creep.pos));
       // Since I'm tired, build a road to improve the future
       road = Game.rooms[roomName].createConstructionSite(creep.pos.x, creep.pos.y, STRUCTURE_ROAD , 'road'+Game.time);
       creep.build(road);
