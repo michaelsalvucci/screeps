@@ -136,7 +136,8 @@ module.exports.loop = function () {
         // @TODO
         break;
       case "builder":
-        // Put in 1 WORK for each CARRY
+        // Put in 1 WORK for each 2 MOVE
+        // Put in 2 MOVE for each CARRY
         if (currentEnergy >= 800) {
           bodySetup = [WORK,WORK,WORK,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY] // w100+w100+w100+m50+m50+m50+m50+m50+m50+c50+c50+c50+c50 = 800
         }
@@ -159,7 +160,7 @@ module.exports.loop = function () {
             bodySetup = [WORK,WORK,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY] // w100+w100+m50+m50+m50+m50+c50+c50 = 500
         }
         else if (currentEnergy >= 450) {
-            bodySetup = [WORK,WORK,MOVE,MOVE,CARRY,MOVE,CARRY] // w100+m50+w100+m50+c50+m50+c50 = 450
+            bodySetup = [WORK,WORK,MOVE,MOVE,MOVE,MOVE,CARRY] // i had to put in 2 moves per carry, so perhaps I should add TOUGH to this?
         }
         else if (currentEnergy >= 400) {
             bodySetup = [WORK,WORK,MOVE,MOVE,CARRY,MOVE] // w100+m50+w100+m50+c50+m50 = 400
