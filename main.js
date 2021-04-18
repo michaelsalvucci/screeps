@@ -1,5 +1,7 @@
 var utilRoom = require('util.room');
 var fatigueCheck = require('fatigueCheck');
+var role_towerfiller = require('role_towerfiller');
+var role_defendmelee = require('role_defendmelee');
 
 //emoji available at:  http://unicode.org/emoji/charts/emoji-style.txt
 
@@ -21,8 +23,9 @@ var pathColorBuilder = '#ffffff';
 
 //var currentHarvestersPerRoom = 0
 //@TODO:  This looks like a problem because it doesn't take into part that we could be in different shards
-var maxHarvestersPerRoom = 2
-var maxBuildersPerRoom = 6
+var maxHarvestersPerRoom = 1
+var maxBuildersPerRoom = 8
+var maxTowerFillersPerRoom = 1
 var maxMinersPerRoom = 0
 
 var taskHarvest = 1 // 1=harvest; 0=store it at the controller (@TODO ... or somewhere else)
@@ -120,8 +123,29 @@ module.exports.loop = function () {
         // @TODO
         break;
       case "builder":
-        if (currentEnergy >= 500) {
+        if (currentEnergy >= 800) {
+          bodySetup = [WORK,WORK,WORK,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY] // w100+w100+w100+m50+m50+m50+m50+m50+m50+c50+c50+c50+c50 = 800
+        }
+        else if (currentEnergy >= 750) {
+          bodySetup = [WORK,WORK,WORK,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY] // w100+w100+w100+m50+m50+m50+m50+m50+m50+c50+c50+c50 = 750
+        }
+        else if (currentEnergy >= 700) {
+          bodySetup = [WORK,WORK,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY] // w100+w100+m50+m50+m50+m50+m50+m50+m50+c50+c50+c50 = 700
+        }
+        else if (currentEnergy >= 650) {
+          bodySetup = [WORK,WORK,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY] // w100+w100+m50+m50+m50+m50+m50+m50+c50+c50+c50 = 650
+        }
+        else if (currentEnergy >= 600) {
+          bodySetup = [WORK,WORK,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY] // w100+w100+m50+m50+m50+m50+m50+c50+c50+c50 = 600
+        }
+        else if (currentEnergy >= 550) {
+            bodySetup = [WORK,WORK,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY] // w100+w100+m50+m50+m50+m50+c50+c50+c50 = 550
+        }
+        else if (currentEnergy >= 500) {
             bodySetup = [WORK,WORK,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY] // w100+w100+m50+m50+m50+m50+c50+c50 = 500
+        }
+        else if (currentEnergy >= 450) {
+            bodySetup = [WORK,WORK,MOVE,MOVE,CARRY,MOVE,CARRY] // w100+m50+w100+m50+c50+m50+c50 = 450
         }
         else if (currentEnergy >= 400) {
             bodySetup = [WORK,WORK,MOVE,MOVE,CARRY,MOVE] // w100+m50+w100+m50+c50+m50 = 400
@@ -148,10 +172,10 @@ module.exports.loop = function () {
         break;
     }
 
+    // Pick a random energy source and assign it to the creep
     var activeSources = Game.rooms[roomName].find(FIND_SOURCES_ACTIVE);
     var activeSourcesLength = activeSources.length;
     var harvestSource = activeSources[Math.floor(Math.random()*activeSourcesLength)];
-//console.log(JSON.stringify(harvestSource));
 
     if (harvesters.length < maxHarvestersPerRoom || builders.length < maxBuildersPerRoom) {
       console.log('currentEnergy='+currentEnergy);
@@ -212,17 +236,14 @@ module.exports.loop = function () {
       if (creep.memory.taskBuild == 0 && creep.carry.energy < creep.carryCapacity) {
         // Harvest instead of build
 
-// Old way:
-//        var result = creep.moveTo(source, {visualizePathStyle: {stroke: pathColorBuilder}});
-//        creep.harvest(source);
-//console.log('source1='+JSON.stringify(source));
+        // Old way:
+        // var result = creep.moveTo(source, {visualizePathStyle: {stroke: pathColorBuilder}});
+        // creep.harvest(source);
+        //console.log('source1='+JSON.stringify(source));
 
-// New way:
-//        var source = creep.memory.harvestSource;
+        // New way:
         var result = creep.moveTo(creep.memory.harvestSource.pos.x,creep.memory.harvestSource.pos.y, {visualizePathStyle: {stroke: pathColorBuilder}});
         creep.harvest(source);
-//console.log('source2='+JSON.stringify(creep.memory.harvestSource.pos.x));
-//console.log('source3='+JSON.stringify(creep.memory.harvestSource.id));
 
         creep.say('A🚧' + creep.carry.energy + '/' + creep.carryCapacity);
       } else {
@@ -344,6 +365,11 @@ module.exports.loop = function () {
         }
       }
     }
+
+    if(creep.memory.role == 'towerfiller') {
+        role_towerfiller.run(creep, roomName);
+    }
+
     // HEALTH CHECK and ROAD BUILDING
     fatigueCheck.run(creep, roomName);
 
