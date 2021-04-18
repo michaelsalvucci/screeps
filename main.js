@@ -1,4 +1,5 @@
 var utilRoom = require('util.room');
+var fatigueCheck = require('fatigueCheck');
 
 //emoji available at:  http://unicode.org/emoji/charts/emoji-style.txt
 
@@ -20,8 +21,8 @@ var pathColorBuilder = '#ffffff';
 
 //var currentHarvestersPerRoom = 0
 //@TODO:  This looks like a problem because it doesn't take into part that we could be in different shards
-var maxHarvestersPerRoom = 1
-var maxBuildersPerRoom = 4
+var maxHarvestersPerRoom = 2
+var maxBuildersPerRoom = 6
 var maxMinersPerRoom = 0
 
 var taskHarvest = 1 // 1=harvest; 0=store it at the controller (@TODO ... or somewhere else)
@@ -344,15 +345,7 @@ module.exports.loop = function () {
       }
     }
     // HEALTH CHECK and ROAD BUILDING
-    if(creep.fatigue > 0) {
-      creep.say('😌 fatigue');
-      // Since I'm tired, build a road to improve the future
+    fatigueCheck.run(creep, roomName);
 
-      if(Game.rooms[roomName].getTerrain().get(creep.pos.x,creep.pos.y) === TERRAIN_MASK_SWAMP) {
-        //console.log('Building road because of fatigue');
-        road = Game.rooms[roomName].createConstructionSite(creep.pos.x, creep.pos.y, STRUCTURE_ROAD , 'road'+Game.time);
-        creep.build(road);
-      }
-    }
   }
 }
